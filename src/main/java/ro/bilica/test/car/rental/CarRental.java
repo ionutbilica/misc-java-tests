@@ -7,17 +7,18 @@ public class CarRental {
 	
 	private final long maxRentalLength;
 	private final Map<String, Long> carToRentalTime;
+	Thread thread;
 	
 	public CarRental(long maxRentalLength) {
 		this.maxRentalLength = maxRentalLength;
 		carToRentalTime = new HashMap<String, Long>();
-		
-		Thread thread = new ThreadExtension();
-
-		thread.start();
 	}
 	
 	public void rentCar(String registrationNumber) {
+		if(carToRentalTime.isEmpty()){
+			thread = new ThreadExtension();
+			thread.start();	
+		}
 		carToRentalTime.put(registrationNumber, System.currentTimeMillis());
 		System.out.println("I rented a car with registration number: " + registrationNumber + " at " + System.currentTimeMillis());
 	}
@@ -25,6 +26,11 @@ public class CarRental {
 	public void returnCar(String registrationNumber) {
 		 synchronized(carToRentalTime) {
 			 carToRentalTime.remove(registrationNumber);
+				if(carToRentalTime.isEmpty()){
+					synchronized(thread) {
+						thread.interrupt();
+					}
+				}
 		 }
 		System.out.println("The car with registration number " + registrationNumber + " was returned at " + System.currentTimeMillis());
 	}
@@ -33,17 +39,19 @@ public class CarRental {
 		public void run(){
 			while (!isInterrupted()){
 				try {
-					sleep(300);
+					synchronized(this) {
+						sleep(300);	
+					}
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 					return;
 				}
-				System.out.println("Check if rented cars were returned on time.");
 				verifyCars();
 			}
 		}
 
 		private void verifyCars() {
+			System.out.println("Check if rented cars were returned on time.");
 			for (Map.Entry<String, Long> entry : carToRentalTime.entrySet()) {
 			    String key = entry.getKey();
 			    Long value = entry.getValue();
