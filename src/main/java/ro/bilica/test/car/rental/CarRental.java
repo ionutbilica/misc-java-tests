@@ -19,33 +19,37 @@ public class CarRental {
 	
 	public void rentCar(String registrationNumber) {
 		carToRentalTime.put(registrationNumber, System.currentTimeMillis());
-		System.out.println("Am inchiriat masina cu numarul: " + registrationNumber + " la " + System.currentTimeMillis());
+		System.out.println("I rented a car with registration number: " + registrationNumber + " at " + System.currentTimeMillis());
 	}
 	
 	public void returnCar(String registrationNumber) {
 		 synchronized(carToRentalTime) {
 			 carToRentalTime.remove(registrationNumber);
 		 }
-		System.out.println("Masina cu numarul: " + registrationNumber + " a fost returnata la " + System.currentTimeMillis());
+		System.out.println("The car with registration number " + registrationNumber + " was returned at " + System.currentTimeMillis());
 	}
 	
 	private final class ThreadExtension extends Thread {
 		public void run(){
-			while(true){
+			while (!isInterrupted()){
 				try {
 					sleep(300);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
+					return;
 				}
-				System.out.println("checking..");
-				for (Map.Entry<String, Long> entry : carToRentalTime.entrySet()) {
-				    String key = entry.getKey();
-				    Long value = entry.getValue();
-				    if(System.currentTimeMillis() - value > maxRentalLength){
-				    	System.out.println("			Masina cu numarul: " + key + " nu a fost returnata la timp!");
-				    }
-				}
+				System.out.println("Check if rented cars were returned on time.");
+				verifyCars();
+			}
+		}
+
+		private void verifyCars() {
+			for (Map.Entry<String, Long> entry : carToRentalTime.entrySet()) {
+			    String key = entry.getKey();
+			    Long value = entry.getValue();
+			    if(System.currentTimeMillis() - value > maxRentalLength){
+			    	System.out.println("The car with registration number " + key +" was NOT returned on time!");
+			    }
 			}
 		}
 	}
