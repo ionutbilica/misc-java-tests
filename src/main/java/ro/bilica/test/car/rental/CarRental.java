@@ -2,7 +2,7 @@ package ro.bilica.test.car.rental;
 
 public class CarRental {
 	
-	final long maxRentalLength;
+	private final long maxRentalLength;
 	
 	public CarRental(long maxRentalLength) {
 		this.maxRentalLength = maxRentalLength;
