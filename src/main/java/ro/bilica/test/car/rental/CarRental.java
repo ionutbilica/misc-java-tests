@@ -1,13 +1,9 @@
 package ro.bilica.test.car.rental;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public class CarRental {
-
-	Logger log;
 	
 	private final long maxRentalLength;
 	private final Map<String, Long> carToRentalTime;
@@ -16,21 +12,9 @@ public class CarRental {
 		this.maxRentalLength = maxRentalLength;
 		carToRentalTime = new HashMap<String, Long>();
 		
-		Thread thread = new Thread(){
-		    public void run(){
-		    	while(true){
-		    		for (Map.Entry<String, Long> entry : carToRentalTime.entrySet()) {
-		    		    String key = entry.getKey();
-		    		    Long value = entry.getValue();
-		    		    if(System.currentTimeMillis() - value > maxRentalLength){
-		    		    	System.out.println("			Masina cu numarul: " + key + " nu a fost returnata la timp!");
-		    		    }
-		    		}
-		    	}
-		    }
-		  };
+		Thread thread = new ThreadExtension();
 
-		  thread.start();
+		thread.start();
 	}
 	
 	public void rentCar(String registrationNumber) {
@@ -41,5 +25,19 @@ public class CarRental {
 	public void returnCar(String registrationNumber) {
 		carToRentalTime.remove(registrationNumber);
 		System.out.println("Masina cu numarul: " + registrationNumber + " a fost returnata la " + System.currentTimeMillis());
+	}
+	
+	private final class ThreadExtension extends Thread {
+		public void run(){
+			while(true){
+				for (Map.Entry<String, Long> entry : carToRentalTime.entrySet()) {
+				    String key = entry.getKey();
+				    Long value = entry.getValue();
+				    if(System.currentTimeMillis() - value > maxRentalLength){
+				    	System.out.println("			Masina cu numarul: " + key + " nu a fost returnata la timp!");
+				    }
+				}
+			}
+		}
 	}
 }
