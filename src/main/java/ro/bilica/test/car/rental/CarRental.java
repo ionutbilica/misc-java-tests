@@ -23,13 +23,22 @@ public class CarRental {
 	}
 	
 	public void returnCar(String registrationNumber) {
-		carToRentalTime.remove(registrationNumber);
+		 synchronized(carToRentalTime) {
+			 carToRentalTime.remove(registrationNumber);
+		 }
 		System.out.println("Masina cu numarul: " + registrationNumber + " a fost returnata la " + System.currentTimeMillis());
 	}
 	
 	private final class ThreadExtension extends Thread {
 		public void run(){
 			while(true){
+				try {
+					sleep(300);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				System.out.println("checking..");
 				for (Map.Entry<String, Long> entry : carToRentalTime.entrySet()) {
 				    String key = entry.getKey();
 				    Long value = entry.getValue();
