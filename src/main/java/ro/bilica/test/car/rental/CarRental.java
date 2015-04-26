@@ -1,7 +1,9 @@
 package ro.bilica.test.car.rental;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class CarRental {
 	
@@ -16,7 +18,7 @@ public class CarRental {
 	
 	public void rentCar(String registrationNumber) {
 		if(carToRentalTime.isEmpty()){
-			thread = new ThreadExtension();
+			thread = new CheckerThread();
 			thread.start();	
 		}
 		carToRentalTime.put(registrationNumber, System.currentTimeMillis());
@@ -24,52 +26,60 @@ public class CarRental {
 	}
 	
 	public void returnCar(String registrationNumber) {
-		 Boolean removeSucceed = removeCarFromMap(registrationNumber);
-		 if(removeSucceed){
-			 System.out.println("The car with registration number " + registrationNumber + " was returned at " + System.currentTimeMillis());
-		 }
-	}
-
-	private boolean removeCarFromMap(String registrationNumber) {
-		Long removeSucceed;
-		synchronized(carToRentalTime) {
-			 removeSucceed = carToRentalTime.remove(registrationNumber);
-		 }
-		if(carToRentalTime.isEmpty()){
-			synchronized(thread) {
-				thread.interrupt();
+		synchronized (carToRentalTime) {
+			if (carToRentalTime.containsKey(registrationNumber)) {
+				System.out.println("Car returned on time: " + registrationNumber + ".");
+				carToRentalTime.remove(registrationNumber);
 			}
 		}
-		return removeSucceed != null;
 	}
 	
-	private final class ThreadExtension extends Thread {
+	private final class CheckerThread extends Thread {
+		
+		private boolean shouldStop;
+		
+		public CheckerThread() {
+			shouldStop = false;
+		}
+		
 		public void run(){
-			while (!isInterrupted()){
-				try {
-					synchronized(this) {
-						sleep(300);	
-					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					return;
-				}
+			while (!isInterrupted() && !shouldStop){
+				sleepSomeTime();
 				verifyCars();
+				stopIfNoMoreCars();
+			}
+		}
+
+		private void stopIfNoMoreCars() {
+			synchronized (carToRentalTime) {
+				if (carToRentalTime.isEmpty()) {
+					shouldStop = true;
+				}
+			}
+		}
+
+		private void sleepSomeTime() {
+			try {
+				sleep(300);	
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				shouldStop = true;
 			}
 		}
 
 		private void verifyCars() {
 			System.out.println("Check if rented cars were returned on time.");
-			for (Map.Entry<String, Long> entry : carToRentalTime.entrySet()) {
-			    String key = entry.getKey();
-			    Long value = entry.getValue();
-			    if(System.currentTimeMillis() - value > maxRentalLength){
-			    	removeCarFromMap(key);
-			    	/*synchronized(carToRentalTime) {
-			    		carToRentalTime.remove(key);
-			    	}*/
-			    	System.out.println("The car with registration number " + key +" was NOT returned on time!");
-			    }
+			synchronized (carToRentalTime) {
+				Set<String> unreturnedCars = new HashSet<String>();
+				for (Map.Entry<String, Long> entry : carToRentalTime.entrySet()) {
+					String registrationNumber = entry.getKey();
+					Long rentalTime = entry.getValue();
+					if(System.currentTimeMillis() - rentalTime > maxRentalLength){
+						System.out.println("The car with registration number " + registrationNumber +" was NOT returned on time! Removing it.");
+						unreturnedCars.add(registrationNumber);
+					}
+				}
+				carToRentalTime.keySet().removeAll(unreturnedCars);
 			}
 		}
 	}
