@@ -24,15 +24,23 @@ public class CarRental {
 	}
 	
 	public void returnCar(String registrationNumber) {
-		 synchronized(carToRentalTime) {
-			 carToRentalTime.remove(registrationNumber);
-				if(carToRentalTime.isEmpty()){
-					synchronized(thread) {
-						thread.interrupt();
-					}
-				}
+		 Boolean removeSucceed = removeCarFromMap(registrationNumber);
+		 if(removeSucceed){
+			 System.out.println("The car with registration number " + registrationNumber + " was returned at " + System.currentTimeMillis());
 		 }
-		System.out.println("The car with registration number " + registrationNumber + " was returned at " + System.currentTimeMillis());
+	}
+
+	private boolean removeCarFromMap(String registrationNumber) {
+		Long removeSucceed;
+		synchronized(carToRentalTime) {
+			 removeSucceed = carToRentalTime.remove(registrationNumber);
+		 }
+		if(carToRentalTime.isEmpty()){
+			synchronized(thread) {
+				thread.interrupt();
+			}
+		}
+		return removeSucceed != null;
 	}
 	
 	private final class ThreadExtension extends Thread {
@@ -56,6 +64,10 @@ public class CarRental {
 			    String key = entry.getKey();
 			    Long value = entry.getValue();
 			    if(System.currentTimeMillis() - value > maxRentalLength){
+			    	removeCarFromMap(key);
+			    	/*synchronized(carToRentalTime) {
+			    		carToRentalTime.remove(key);
+			    	}*/
 			    	System.out.println("The car with registration number " + key +" was NOT returned on time!");
 			    }
 			}
