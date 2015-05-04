@@ -22,11 +22,9 @@ public class CarRental {
 	public void rentCar(String registrationNumber) {
 		carToRentalTime.put(registrationNumber, System.currentTimeMillis());
 		System.out.println("I rented a car with registration number: " + registrationNumber + " at " + System.currentTimeMillis());
-		//if(thread.getState() == Thread.State.WAITING){
-			synchronized (carToRentalTime) {
-				carToRentalTime.notify();
-			}
-		//}
+		synchronized (carToRentalTime) {
+			carToRentalTime.notify();
+		}
 	}
 	
 	public void returnCar(String registrationNumber) {
@@ -39,7 +37,7 @@ public class CarRental {
 	}
 
 	public void stop(){
-		System.out.println("Finished");
+		System.out.println("Stop!");
 		synchronized (carToRentalTime) {
 			carToRentalTime.notify();
 		}
@@ -61,26 +59,23 @@ public class CarRental {
 	
 	private final class CheckerThread extends Thread {
 		
-		private boolean shouldStop;
-		
-		public CheckerThread() {
-			shouldStop = false;
-		}		
 		public void run(){
-			while (!isInterrupted() && !shouldStop){
-				if (carToRentalTime.isEmpty()) {
-					threadWait();
+			while (!isInterrupted()){
+				if(!isInterrupted()){
+					if (carToRentalTime.isEmpty()) {
+						threadWait();
+					}
+					sleepSomeTime();
+					verifyCars();
+					stopIfNoMoreCars();
 				}
-				sleepSomeTime();
-				verifyCars();
-				stopIfNoMoreCars();
 			}
 		}
 		
 		private void stopIfNoMoreCars() {
 			synchronized (carToRentalTime) {
 				if (carToRentalTime.isEmpty()) {
-					shouldStop = true;
+					threadWait();
 				}
 			}
 		}
@@ -90,7 +85,6 @@ public class CarRental {
 				sleep(300);	
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-				shouldStop = true;
 			}
 		}
 
