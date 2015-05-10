@@ -46,36 +46,27 @@ public class CarRental {
 		}
 	}
 	
-	private void threadWait() {
-		try {
-			synchronized (carToRentalTime) {
-				carToRentalTime.wait();
-			}
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
 	private final class CheckerThread extends Thread {
 		
 		public void run(){
 			while (!isInterrupted()){
-				if(!isInterrupted()){
-					if (carToRentalTime.isEmpty()) {
-						threadWait();
-					}
-					sleepSomeTime();
-					verifyCars();
-					stopIfNoMoreCars();
-				}
+				sleepSomeTime();
+				waitUntilThereAreRentedCars();
+				verifyCars();
 			}
 		}
 		
-		private void stopIfNoMoreCars() {
+		private void waitUntilThereAreRentedCars() {
 			synchronized (carToRentalTime) {
 				if (carToRentalTime.isEmpty()) {
-					threadWait();
+					try {
+						synchronized (carToRentalTime) {
+							carToRentalTime.wait();
+						}
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			}
 		}
