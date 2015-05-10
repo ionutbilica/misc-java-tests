@@ -38,12 +38,7 @@ public class CarRental {
 
 	public void stop(){
 		System.out.println("Stop!");
-		synchronized (carToRentalTime) {
-			carToRentalTime.notify();
-		}
-		synchronized (thread) {
-			thread.interrupt();
-		}
+		thread.interrupt();
 	}
 	
 	private final class CheckerThread extends Thread {
