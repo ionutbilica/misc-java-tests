@@ -50,8 +50,7 @@ public class CarRental {
 					verifyCars();
 				}
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				System.out.println("The thread has been requested to stop. Stopping.");
 				return;
 			}
 		}
